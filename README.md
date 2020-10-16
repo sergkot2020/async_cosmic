@@ -2,7 +2,7 @@
 
 ![space](img/space.png)
 
-It is the simple example with own event loop
+It is a simple example with own event loop
 ```
 $ python cosmic_game.py
 ```
