@@ -6,7 +6,7 @@ from curses_tools import draw_frame, fire, read_controls, get_frame_size
 from itertools import cycle
 
 TIMES = 1000
-STARS = 100
+STARS = 300
 
 
 def read_frame():
@@ -22,14 +22,15 @@ class Blink:
     A_BOLD_TIC = 5
     DEFAULT2_TIC = 3
 
+    SPEED = 3  # the most fast speed is 1
     SYMBOLS = ['+', '*', '.', ':']
 
     def __init__(self, canvas, row=None, column=None, symbol='*', start_tic=1, is_random=True):
         self.cycle = sum([self.A_DIM_TIC, self.DEFAULT_TIC, self.A_BOLD_TIC, self.DEFAULT2_TIC])
+        self.max_y, self.max_x = canvas.getmaxyx()
         if is_random:
-            max_y, max_x = canvas.getmaxyx()
-            row = random.randint(2, max_y - 2)
-            column = random.randint(2, max_x - 2)
+            row = random.randint(2, self.max_y - 2)
+            column = random.randint(2, self.max_x - 2)
             symbol = random.choice(self.SYMBOLS)
             start_tic = random.randint(1, self.cycle)
 
@@ -44,15 +45,26 @@ class Blink:
 
     async def run(self):
         start = self.start_tic
+        count_tic = 0
         while True:
             for i in range(start, self.cycle):
+                count_tic += 1
                 args = [self.row, self.column, self.symbol]
                 if self.left_dim < i <= self.right_dim:
                     args.append(curses.A_DIM)
                 elif self.left_bold < i <= self.right_bold:
                     args.append(curses.A_BOLD)
                 self.canvas.addstr(*args)
+
                 await asyncio.sleep(0)
+
+                self.canvas.addstr(self.row, self.column, ' ')
+
+                if count_tic % self.SPEED == 0:
+                    self.row += 1
+                    if self.row == (self.max_y - 1):
+                        self.row = 1
+
             start = 1
 
 
@@ -92,7 +104,9 @@ class Spaceship:
 def draw(canvas):
     frame_1, frame_2 = read_frame()
     max_y, max_x = canvas.getmaxyx()
-    coroutines = [Blink(canvas, is_random=True).run() for _ in range(STARS)]
+    coroutines = [
+        Blink(canvas, is_random=True).run() for _ in range(STARS)
+    ]
     coroutines.extend([
         fire(canvas, int(max_y / 2), int(max_x / 2)),
         Spaceship(canvas, frame_1, frame_2, speed=3).run(),
