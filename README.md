@@ -1,6 +1,6 @@
 # async_cosmic
 
-![space](img/space.png)
+![space](img/video.gif)
 
 It is a simple example with own event loop
 ```
